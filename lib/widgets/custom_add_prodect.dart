@@ -8,11 +8,11 @@ class CustomAddProdect extends StatelessWidget {
   final bool enabled;
 
   const CustomAddProdect({
-    Key? key,
+    super.key,
     required this.label,
     required this.controller,
     this.enabled = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -186,7 +186,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     const SizedBox(height: 20),
 
                     // 🔹 زر الإضافة
-                    Container(
+                    SizedBox(
                       width: double.infinity,
                       height: 45,
                       child: ElevatedButton(
