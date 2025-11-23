@@ -39,7 +39,7 @@ class _Login_screenState extends State<Login_screen> {
     print('AccessToken: $accessToken');
     print('RefreshToken: $refreshToken');
 
-    if (accessToken != null && refreshToken != null) {
+    if (refreshToken != null) {
       Navigator.pushReplacement(
         context,
         PageTransition(

@@ -1,72 +1,33 @@
+// lib/services/product_service.dart
 import 'package:software_system/Models/prodects.dart';
+import 'package:software_system/service/supabase_helper.dart';
 
-class ProductData {
-  static final List<Product> products = [
-    Product(
-      name: "Laptop Mac",
-      code: "DL-101",
-      image: "assets/Images/laptopMac.jpg",
-      totalQuantity: 0,
-      soldQuantity: 5,
-      purchasePrice: 5000,
-      sellingPrice: 6000,
-      type: "وارد",
-      move: "رصيد افتتاحي",
-    ),
-    Product(
-      name: "iPhone 14",
-      code: "AP-502",
-      image: "assets/Images/iphone14.png",
-      totalQuantity: 8,
-      soldQuantity: 3,
-      purchasePrice: 1000,
-      sellingPrice: 1100,
-      type: "صادر",
-      move: "اوردر",
-    ),
-    Product(
-      name: "Smart TV",
-      code: "LG-212",
-      image: "assets/Images/smartTV.png",
-      totalQuantity: 25,
-      soldQuantity: 10,
-      purchasePrice: 200,
-      sellingPrice: 250,
-      type: "وارد",
-      move: "رصيد افتتاحي",
-    ),
-    Product(
-      name: "Wireless Mouse",
-      code: "MS-600",
-      image: "assets/Images/mouseWireLess.png",
-      totalQuantity: 3,
-      soldQuantity: 2,
-      purchasePrice: 50,
-      sellingPrice: 70,
-      type: "صادر",
-      move: "اوردر",
-    ),
-    Product(
-      name: "Keyboard RGB",
-      code: "KB-702",
-      image: "assets/Images/keyboardRGB.png",
-      totalQuantity: 12,
-      soldQuantity: 4,
-      purchasePrice: 90,
-      sellingPrice: 105,
-      type: "صادر",
-      move: "اوردر",
-    ),
-    Product(
-      name: "Keyboard RGB 2 ",
-      code: "KB-7002",
-      image: "assets/Images/keyboardRGB.png",
-      totalQuantity: 2,
-      soldQuantity: 4,
-      purchasePrice: 90,
-      sellingPrice: 105,
-      type: "وارد",
-      move: "مشتريات",
-    ),
-  ];
+class ProductService {  // صح: ProductService مش ProdectData
+  static const String _table = 'products';
+
+  // جلب كل المنتجات
+  static Future<List<Product>> getAllProducts() async {
+    final response = await SupabaseHelper.client
+        .from(_table)
+        .select()
+        .order('name', ascending: true);
+
+    return (response as List).map((json) => Product.fromJson(json)).toList();
+  }
+
+  // جلب المنتجات الناقصة فقط
+  static Future<List<Product>> getMissingProducts() async {
+    final response = await SupabaseHelper.client
+        .from(_table)
+        .select()
+        .lte('totalQuantity', 3)
+        .order('totalQuantity', ascending: true);
+
+    return (response as List).map((json) => Product.fromJson(json)).toList();
+  }
+
+  // إضافة منتج جديد
+  static Future<void> addProduct(Product product) async {
+    await SupabaseHelper.client.from(_table).insert(product.toJson());
+  }
 }
