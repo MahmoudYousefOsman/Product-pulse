@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:software_system/data/prodect_data.dart';
+import 'package:software_system/service/prodect_data.dart';
 
 class MissingProducts extends StatelessWidget {
   const MissingProducts({super.key});
