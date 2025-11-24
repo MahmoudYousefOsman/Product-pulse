@@ -1,75 +1,90 @@
-// screens/product_movements_screen.dart
 import 'package:flutter/material.dart';
-import 'package:software_system/service/product_data.dart';
-import 'package:software_system/Models/products.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ProductMovementsScreen extends StatelessWidget {
-  const ProductMovementsScreen({super.key});
+class ProductMovementsScreen extends StatefulWidget {
+  @override
+  _ProductMovementsScreenState createState() => _ProductMovementsScreenState();
+}
+
+class _ProductMovementsScreenState extends State<ProductMovementsScreen> {
+  bool loading = true;
+  List<Map<String, dynamic>> transactions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchTransactions();
+  }
+
+  Future fetchTransactions() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('product_transactions')
+          .select('*, products(name)')
+          .order('created_at', ascending: false);
+
+      setState(() {
+        transactions = List<Map<String, dynamic>>.from(response);
+        loading = false;
+      });
+    } catch (e) {
+      print("Supabase Error: $e");
+      setState(() => loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('حركات المنتجات'),
-        centerTitle: true,
-        backgroundColor: Colors.blueAccent,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: FutureBuilder<List<Product>>(
-          future: ProductService.getAllProducts(), // من Supabase
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (snapshot.hasError) {
-              return Center(
-                child: Text(
-                  "حدث خطأ: ${snapshot.error}",
-                  style: const TextStyle(color: Colors.red),
-                ),
-              );
-            }
-
-            final products = snapshot.data ?? [];
-
-            if (products.isEmpty) {
-              return const Center(
-                child: Text(
-                  "لا توجد حركات منتجات",
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-              );
-            }
-
-            return ListView.builder(
-              itemCount: products.length,
+        appBar: AppBar(
+          title: const Text("حركات المنتجات"),
+          centerTitle: true,
+          backgroundColor: Colors.blueAccent,
+        ),
+        body: loading
+            ? const Center(child: CircularProgressIndicator())
+            : transactions.isEmpty
+            ? const Center(child: Text("لا توجد حركات حتى الآن"))
+            : Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: ListView.builder(
+              itemCount: transactions.length,
               itemBuilder: (context, index) {
-                final product = products[index];
+                final item = transactions[index];
 
-                final String name = product.name;
-                final String move = product.move;
-                final String type = product.type;
-                final int remainingQuantity = product.remainingQuantity;
+                final String productName =
+                    item['products']?['name'] ?? 'غير معروف';
+                final String model =
+                (item['model'] ?? "").toString().toLowerCase();
+                final String type = item['type'] ?? "in"; // in / out
+                final int quantity = item['quantity'] ?? 0;
+                final String createdAt =
+                    item['created_at']?.toString().substring(0, 16) ?? "";
 
-                final bool isIncoming = type == 'وارد';
-                final bool isLowStock = remainingQuantity <= 3;
 
-                // تحديد لون الحركة
-                Color moveTextColor;
-                Color? moveBackgroundColor;
+                String transactionType;
+                Color typeColor;
 
-                if (move == 'رصيد افتتاحي') {
-                  moveTextColor = Colors.green[700]!;
-                  moveBackgroundColor = Colors.green[50];
-                } else if (move == 'مشتريات') {
-                  moveTextColor = Colors.green[700]!;
-                  moveBackgroundColor = Colors.green[100];
-                } else {
-                  moveTextColor = Colors.red[700]!;
-                  moveBackgroundColor = Colors.red[50];
+                switch (model) {
+                  case "stock":
+                    transactionType = "رصيد افتتاحي";
+                    typeColor = Colors.green;
+                    break;
+                  case "orders":
+                    transactionType = "أوردر";
+                    typeColor = Colors.red;
+                    break;
+                  case "purchases":
+                    transactionType = "مشتريات";
+                    typeColor = Colors.green;
+                    break;
+                  default:
+                    transactionType = "غير معروف";
+                    typeColor = Colors.grey;
                 }
+
+
+                Color backgroundColor = typeColor.withOpacity(0.15);
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
@@ -81,34 +96,26 @@ class ProductMovementsScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(12.0),
                     child: Row(
                       children: [
-                        // اسم المنتج + نوع الحركة
+
                         Expanded(
-                          flex: 2,
+                          flex: 3,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                name,
+                                productName,
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: moveBackgroundColor,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  move,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: moveTextColor,
-                                  ),
+                              Text(
+                                transactionType,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: typeColor,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
@@ -117,23 +124,21 @@ class ProductMovementsScreen extends StatelessWidget {
 
                         const SizedBox(width: 10),
 
-                        // النوع: وارد / صادر
+
                         Expanded(
                           flex: 1,
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             decoration: BoxDecoration(
-                              color: isIncoming ? Colors.green[50] : Colors.red[50],
+                              color: backgroundColor,
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: isIncoming ? Colors.green : Colors.red,
-                              ),
+                              border: Border.all(color: typeColor),
                             ),
                             child: Center(
                               child: Text(
-                                type,
+                                type == "in" ? "وارد" : "صادر",
                                 style: TextStyle(
-                                  color: isIncoming ? Colors.green[700] : Colors.red[700],
+                                  color: typeColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
                                 ),
@@ -144,41 +149,28 @@ class ProductMovementsScreen extends StatelessWidget {
 
                         const SizedBox(width: 10),
 
-                        // الكمية المتبقية
+
                         Expanded(
                           flex: 1,
                           child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isLowStock ? Icons.arrow_downward : Icons.arrow_upward,
-                                  color: isLowStock ? Colors.red : Colors.green,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  remainingQuantity.toString(),
-                                  style: TextStyle(
-                                    color: isLowStock ? Colors.red : Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              quantity.toString(),
+                              style: TextStyle(
+                                color: typeColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         ),
+
                         const SizedBox(width: 10),
-                        // التاريخ (تقريبي)
+
+
                         Expanded(
                           flex: 2,
                           child: Text(
-                            DateTime.now()
-                                .subtract(Duration(days: index))
-                                .toString()
-                                .substring(0, 16)
-                                .replaceAll('-', '/'),
+                            createdAt,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.grey,
@@ -191,10 +183,8 @@ class ProductMovementsScreen extends StatelessWidget {
                   ),
                 );
               },
-            );
-          },
-        ),
-      ),
-    );
-  }
+            ),
+            ),
+        );
+    }
 }
