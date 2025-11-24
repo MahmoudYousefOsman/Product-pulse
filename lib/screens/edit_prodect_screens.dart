@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:software_system/Models/prodects.dart';
+import 'package:software_system/Models/products.dart';
 
 class EditProductScreen extends StatefulWidget {
   final Product product;
