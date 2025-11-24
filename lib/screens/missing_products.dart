@@ -1,6 +1,6 @@
 // screens/missing_products.dart
 import 'package:flutter/material.dart';
-import 'package:software_system/data/prodect_data.dart'; // ← الكلاس اللي عملناه
+import 'package:software_system/service/prodect_data.dart'; // ← الكلاس اللي عملناه
 import 'package:software_system/Models/prodects.dart';
 
 class MissingProducts extends StatelessWidget {

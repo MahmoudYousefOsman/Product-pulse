@@ -1,6 +1,6 @@
 // screens/all_products_screen.dart
 import 'package:flutter/material.dart';
-import 'package:software_system/data/prodect_data.dart';
+import 'package:software_system/service/prodect_data.dart';
 import 'package:software_system/Models/prodects.dart';
 import 'package:software_system/screens/add_prodects.dart';
 import 'package:software_system/screens/edit_prodect_screens.dart';
