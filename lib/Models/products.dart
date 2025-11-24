@@ -35,8 +35,8 @@ class Product {
       
       totalQuantity: (json['totalQuantity'] as num?)?.toInt() ?? 0,
       soldQuantity: (json['soldQuantity'] as num?)?.toInt() ?? 0,
-      purchasePrice: (json['purchasePrice'] as num?)?.toDouble() ?? 0.0,
-      sellingPrice: (json['sellingPrice'] as num?)?.toDouble() ?? 0.0,
+      purchasePrice: (json['PurchasePrice'] as num?)?.toDouble() ?? 0.0,
+      sellingPrice: (json['SellingPrice'] as num?)?.toDouble() ?? 0.0,
       type: json['type'] as String? ?? '',
       move: json['move'] as String? ?? '',
     );
@@ -49,7 +49,7 @@ class Product {
         'totalQuantity': totalQuantity,
         'soldQuantity': soldQuantity,
         'purchasePrice': purchasePrice,
-        'sellingPrice': sellingPrice,
+        'SellingPrice': sellingPrice,
         'type': type,
         'move': move,
       };
