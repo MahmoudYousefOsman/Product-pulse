@@ -1,1 +1,14 @@
 flutter/ephemeral
+# Flutter & Dart
+.dart_tool/
+.packages
+.pub-cache/
+build/
+flutter_export_environment.sh
+
+# macOS
+.DS_Store
+
+# Android
+*.keystore
+*.jks
