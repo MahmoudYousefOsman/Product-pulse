@@ -51,6 +51,24 @@ class ClientsService {
       throw Exception('خطأ في تحديث العميل: $e');
     }
   }
+  Future<String?> validateClient({required String name, required String phone, int? clientId}) async {
+
+    if (name.trim().length < 3) {
+      return "الاسم يجب أن يكون على الأقل 3 حروف";
+    }
+
+
+    try {
+      final existingClient = await getClientByPhone(phone);
+      if (existingClient != null && existingClient.id != clientId) {
+        return "رقم الهاتف موجود بالفعل";
+      }
+    } catch (e) {
+      return "خطأ أثناء التحقق من رقم الهاتف: $e";
+    }
+
+    return null;
+  }
 
 
   Future<void> deleteClient(int id) async {

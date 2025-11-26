@@ -182,7 +182,7 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                   const SizedBox(height: 10),
                   Text(
                     "تعديل العميل",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue.shade900), // لون أزرق
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
                   ),
                   const SizedBox(height: 20),
                   _buildTextField(_nameController, "الاسم", Icons.person),
@@ -215,20 +215,25 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                           padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                         ),
-                        child: const Text(
-                          "إلغاء",
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: const Text("إلغاء", style: TextStyle(color: Colors.white)),
                       ),
                       ElevatedButton(
                         onPressed: () async {
+                          final errorMessage = await _clientsService.validateClient(
+                            name: _nameController.text,
+                            phone: _phoneController.text,
+                            clientId: client.id,
+                          );
+                          if (errorMessage != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(errorMessage)),
+                            );
+                            return;
+                          }
                           final updatedClient = Client(
                             name: _nameController.text,
                             phone: _phoneController.text,
                             address: _addressController.text,
-                            // تم حذف type: _selectedType,
                             newClient: _newClient,
                           );
                           try {
@@ -236,10 +241,12 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                             Navigator.pop(context);
                             _fetchClients();
                             ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("تم تحديث بيانات العميل ✅")));
+                              const SnackBar(content: Text("تم تحديث بيانات العميل ✅")),
+                            );
                           } catch (e) {
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(SnackBar(content: Text("خطأ: $e")));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("خطأ: $e")),
+                            );
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -247,12 +254,7 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                           padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                         ),
-                        child: const Text(
-                          "حفظ",
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: const Text("حفظ", style: TextStyle(color: Colors.white)),
                       ),
                     ],
                   ),
@@ -315,16 +317,9 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                 child: const Icon(Icons.warning_amber_rounded, size: 50, color: Colors.red),
               ),
               const SizedBox(height: 20),
-              const Text(
-                "تأكيد الحذف",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
+              const Text("تأكيد الحذف", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              const Text(
-                "هل أنت متأكد أنك تريد حذف هذا العميل؟",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.black54),
-              ),
+              const Text("هل أنت متأكد أنك تريد حذف هذا العميل؟", textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.black54)),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -336,12 +331,7 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
-                    child: const Text(
-                      "إلغاء",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: const Text("إلغاء", style: TextStyle(color: Colors.white)),
                   ),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
@@ -350,12 +340,7 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
-                    child: const Text(
-                      "حذف",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: const Text("حذف", style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),
@@ -369,11 +354,13 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
       try {
         await _clientsService.deleteClient(id);
         _fetchClients();
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("تم حذف العميل ✅")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("تم حذف العميل ✅")),
+        );
       } catch (e) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("خطأ: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("خطأ: $e")),
+        );
       }
     }
   }
@@ -401,14 +388,7 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 10),
-                    const Text(
-                      "كل العملاء",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    const Text("كل العملاء", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -416,14 +396,7 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      child: Text(
-                        "${_clients.length}",
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: Text("${_clients.length}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ],
                 ),
@@ -432,25 +405,18 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                 child: _loading
                     ? const Center(child: CircularProgressIndicator(color: Colors.white))
                     : _clients.isEmpty
-                    ? const Center(
-                  child: Text(
-                    "لم يتم العثور على عملاء",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                )
+                    ? const Center(child: Text("لم يتم العثور على عملاء", style: TextStyle(fontSize: 18, color: Colors.white)))
                     : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: _clients.length,
                   itemBuilder: (context, index) {
                     final client = _clients[index];
-
                     Widget card = _ClientCard(
                       client: client,
                       onView: () => _showClientDetails(client),
                       onEdit: () => _editClient(client),
                       onDelete: () => _deleteClient(client.id!),
                     );
-
                     if (_animationController != null) {
                       final animation = Tween<double>(begin: 0, end: 1).animate(
                         CurvedAnimation(
@@ -462,22 +428,17 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                           ),
                         ),
                       );
-
                       return AnimatedBuilder(
                         animation: animation,
                         builder: (context, child) {
                           return Transform.translate(
                             offset: Offset(0, 50 * (1 - animation.value)),
-                            child: Opacity(
-                              opacity: animation.value,
-                              child: child,
-                            ),
+                            child: Opacity(opacity: animation.value, child: child),
                           );
                         },
                         child: card,
                       );
                     }
-
                     return card;
                   },
                 ),
@@ -543,16 +504,10 @@ class _ClientCardState extends State<_ClientCard> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade400, Colors.blue.shade700],
-                  ),
+                  gradient: LinearGradient(colors: [Colors.blue.shade400, Colors.blue.shade700]),
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.shade200,
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
+                    BoxShadow(color: Colors.blue.shade200, blurRadius: 10, spreadRadius: 2),
                   ],
                 ),
                 child: const Icon(Icons.person, color: Colors.white, size: 30),
@@ -562,23 +517,13 @@ class _ClientCardState extends State<_ClientCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.client.name,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade900,
-                      ),
-                    ),
+                    Text(widget.client.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue.shade900)),
                     const SizedBox(height: 5),
                     Row(
                       children: [
                         Icon(Icons.phone, size: 16, color: Colors.grey.shade600),
                         const SizedBox(width: 5),
-                        Text(
-                          widget.client.phone ?? '-',
-                          style: TextStyle(color: Colors.grey.shade700),
-                        ),
+                        Text(widget.client.phone ?? '-', style: TextStyle(color: Colors.grey.shade700)),
                       ],
                     ),
                   ],
@@ -586,7 +531,7 @@ class _ClientCardState extends State<_ClientCard> {
               ),
               _buildActionButton(Icons.visibility, Colors.blue.shade700, widget.onView),
               const SizedBox(width: 8),
-              _buildActionButton(Icons.edit, Colors.blue.shade700, widget.onEdit), // تم تغيير اللون للأزرق
+              _buildActionButton(Icons.edit, Colors.blue.shade700, widget.onEdit),
               const SizedBox(width: 8),
               _buildActionButton(Icons.delete, Colors.red, widget.onDelete),
             ],
@@ -602,12 +547,7 @@ class _ClientCardState extends State<_ClientCard> {
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: IconButton(
-        icon: Icon(icon),
-        color: color,
-        iconSize: 22,
-        onPressed: onPressed,
-      ),
+      child: IconButton(icon: Icon(icon), color: color, iconSize: 22, onPressed: onPressed),
     );
   }
 }
