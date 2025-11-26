@@ -58,7 +58,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
             keyValue: "clients",
             children: [
               _subItem("كل العملاء", Icons.list_alt_outlined , AllClient()),
-              _subItem("إضافة عميل", Icons.person_add_alt_1_outlined , AddClientSccreens()),
+              _subItem("إضافة عميل", Icons.person_add_alt_1_outlined , AddClientScreen()),
             ],
           ),
           _expandableItem(
