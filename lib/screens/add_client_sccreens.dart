@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:software_system/screens/all_client.dart';
 import '../models/client_model.dart';
 import '../service/clients_service.dart';
 
@@ -99,7 +100,7 @@ class _AddClientScreenState extends State<AddClientScreen>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         ),
       );
-      Navigator.pop(context);
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AllClient()),);
     }
   }
 
