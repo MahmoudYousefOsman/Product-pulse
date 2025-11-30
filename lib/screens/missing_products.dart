@@ -1,6 +1,6 @@
 // screens/missing_products.dart
 import 'package:flutter/material.dart';
-import 'package:software_system/service/product_data.dart'; // ← الكلاس اللي عملناه
+import 'package:software_system/service/Product_Service.dart'; // ← الكلاس اللي عملناه
 import 'package:software_system/Models/products.dart';
 
 class MissingProducts extends StatelessWidget {
@@ -24,7 +24,7 @@ class MissingProducts extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: FutureBuilder<List<Product>>(
-          future: ProductService.getMissingProducts(),
+          future: ProductService.getAllProducts(),
           
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
