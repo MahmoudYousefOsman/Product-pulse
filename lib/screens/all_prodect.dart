@@ -379,7 +379,7 @@ class _AllProdectState extends State<AllProdect> {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               const Text("إدارة مخزوني",
-                  style: TextStyle(color: Colors.grey, fontSize: 17)),
+                  style: TextStyle(color: Colors.white, fontSize: 17)),
               const SizedBox(height: 20),
               Row(
                 children: [
