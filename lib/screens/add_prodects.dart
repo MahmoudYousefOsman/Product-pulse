@@ -1,6 +1,8 @@
-import 'dart:math';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:software_system/service/supabase_helper.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:software_system/widgets/custom_add_prodect.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -12,117 +14,103 @@ class AddProductScreen extends StatefulWidget {
 
 class _AddProductScreenState extends State<AddProductScreen> {
   final nameController = TextEditingController();
-  final codeController = TextEditingController();
   final quantityController = TextEditingController();
-  final supplierController = TextEditingController();
   final purchaseController = TextEditingController();
   final saleController = TextEditingController();
 
-  String? selectedImageAsset;
+  File? selectedImageFile;
+  Uint8List? webImageBytes;
+  final picker = ImagePicker();
 
-  final List<String> imageList = [
-    "assets/images/4kAction.jpg",
-    "assets/images/DRON-X.jpg",
-    "assets/images/fintness.jpg",
-    "assets/images/gamingchar.jpg",
-    "assets/images/gaminglaptop.jpg",
-    "assets/images/HardDisk.jpg",
-    "assets/images/headphone.jpg",
-    "assets/images/iphone14.png",
-    "assets/images/keyboardRGB.png",
-    "assets/images/laptopMac.jpg",
-    "assets/images/mouseWireLess.png",
-    "assets/images/placeholder.jpg",
-    "assets/images/profile.jpg",
-    "assets/images/send_icons.png",
-    "assets/images/smart_inventory.png",
-    "assets/images/smartTV.png",
-    "assets/images/Tablet.jpg",
-  ];
+  // دالة رفع الصورة
+  Future<String?> _uploadImageToSupabase(Uint8List bytes, String fileName) async {
+    try {
+      await Supabase.instance.client.storage
+          .from('product-images')
+          .uploadBinary(fileName, bytes, fileOptions: const FileOptions(upsert: true));
 
-  String generateProductCode() {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final random = Random().nextInt(999);
-    return "PRD-$now$random";
+      final url = Supabase.instance.client.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+
+      debugPrint('تم رفع الصورة: $url');
+      return url;
+    } catch (e) {
+      debugPrint('خطأ رفع الصورة: $e');
+      return null;
+    }
   }
 
-  void pickImageFromAssets() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("اختار صورة"),
-        content: SizedBox(
-          width: 300,
-          height: 300,
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
-            itemCount: imageList.length,
-            itemBuilder: (_, i) => InkWell(
-              onTap: () {
-                setState(() => selectedImageAsset = imageList[i]);
-                Navigator.pop(context);
-              },
-              child: Image.asset(imageList[i], fit: BoxFit.cover),
-            ),
-          ),
-        ),
-      ),
-    );
+  Future<void> pickImage() async {
+    final XFile? picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      if (kIsWeb) {
+        final bytes = await picked.readAsBytes();
+        setState(() => webImageBytes = bytes);
+      } else {
+        setState(() => selectedImageFile = File(picked.path));
+      }
+    }
   }
 
   Future<void> addProduct() async {
     final name = nameController.text.trim();
-    final code = generateProductCode();
     final quantity = int.tryParse(quantityController.text.trim()) ?? 0;
-    final purchasePrice =
-        double.tryParse(purchaseController.text.trim()) ?? 0.0;
+    final purchasePrice = double.tryParse(purchaseController.text.trim()) ?? 0.0;
     final salePrice = double.tryParse(saleController.text.trim()) ?? 0.0;
 
-    if (name.isEmpty) return;
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("اسم المنتج مطلوب"), backgroundColor: Colors.red),
+      );
+      return;
+    }
 
     try {
-      final response = await SupabaseHelper.client
-          .from('products')
-          .insert({
-            'name': name,
-            'code': code,
-            'totalQuantity': quantity,
-            'PurchasePrice': purchasePrice,
-            'SellingPrice': salePrice,
-            'image': selectedImageAsset,
-            'created_at': DateTime.now().toIso8601String(),
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .select()
-          .maybeSingle();
+      String? imageUrl;
+      final fileName = 'prod_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-      print("Added: $response");
+      // فقط لو المستخدم فعلاً اختار صورة
+      if (selectedImageFile != null || webImageBytes != null) {
+        final bytes = kIsWeb 
+            ? webImageBytes! 
+            : await selectedImageFile!.readAsBytes(); // هنا آمن لأننا متأكدين إنه مش null
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("تم إضافة المنتج بنجاح"),
-          backgroundColor: Colors.green,
-        ),
-      );
+        imageUrl = await _uploadImageToSupabase(bytes, fileName);
+      }
+
+      // إضافة المنتج
+      await Supabase.instance.client.from('products').insert({
+        'name': name,
+        'code': 'PRD-${DateTime.now().millisecondsSinceEpoch}',
+        'totalQuantity': quantity,
+        'PurchasePrice': purchasePrice,
+        'SellingPrice': salePrice,
+        'image': imageUrl ?? 'https://via.placeholder.com/150',
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("تم إضافة المنتج بنجاح"), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context, true);
+      }
     } catch (e) {
-      print("Error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("حدث خطأ أثناء إضافة المنتج"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("خطأ: $e"), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
   @override
-  void initState() {
-    super.initState();
-    codeController.text = generateProductCode();
+  void dispose() {
+    nameController.dispose();
+    quantityController.dispose();
+    purchaseController.dispose();
+    saleController.dispose();
+    super.dispose();
   }
 
   @override
@@ -130,11 +118,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF1960fb), Color(0xFF3d37c1)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          gradient: LinearGradient(colors: [Color(0xFF1960fb), Color(0xFF3d37c1)]),
         ),
         child: Center(
           child: Container(
@@ -143,104 +127,53 @@ class _AddProductScreenState extends State<AddProductScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
-              boxShadow: const [
-                BoxShadow(color: Colors.black26, blurRadius: 8),
-              ],
+              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
             ),
             child: SingleChildScrollView(
               child: Column(
-                children: [
-                  const Text(
-                    "اضف منتج جديد",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+                children: <Widget>[
+                  const Text("إضافة منتج جديد", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomAddProdect(
-                          label: "اسم المنتج",
-                          controller: nameController,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: CustomAddProdect(
-                          label: "الكود",
-                          controller: codeController,
-                          enabled: false,
-                        ),
-                      ),
-                    ],
+                  CustomAddProdect(label: "اسم المنتج", controller: nameController, keyboardType: TextInputType.text),
+                  const SizedBox(height: 12),
+                  CustomAddProdect(label: "الكمية", controller: quantityController, keyboardType: TextInputType.number),
+                  const SizedBox(height: 12),
+                  CustomAddProdect(label: "سعر الشراء", controller: purchaseController, keyboardType: TextInputType.number),
+                  const SizedBox(height: 12),
+                  CustomAddProdect(label: "سعر البيع", controller: saleController, keyboardType: TextInputType.number),
+                  const SizedBox(height: 25),
+
+                  ElevatedButton.icon(
+                    onPressed: pickImage,
+                    icon: const Icon(Icons.photo_library),
+                    label: Text(
+                      webImageBytes != null || selectedImageFile != null 
+                          ? "تم اختيار الصورة" 
+                          : "اختر صورة من الجهاز",
+                    ),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange),
                   ),
 
-                  const SizedBox(height: 10),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomAddProdect(
-                          label: "الكميه",
-                          controller: quantityController,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: CustomAddProdect(
-                          label: "المورد",
-                          controller: supplierController,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomAddProdect(
-                          label: "سعر الشراء",
-                          controller: purchaseController,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: CustomAddProdect(
-                          label: "سعر البيع",
-                          controller: saleController,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  ElevatedButton(
-                    onPressed: pickImageFromAssets,
-                    child: const Text("اختيار صورة"),
-                  ),
-
-                  if (selectedImageAsset != null) ...[
-                    const SizedBox(height: 10),
-                    Image.asset(selectedImageAsset!, height: 120),
+                  if (webImageBytes != null || selectedImageFile != null) ...[
+                    const SizedBox(height: 15),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: kIsWeb
+                          ? Image.memory(webImageBytes!, height: 180, fit: BoxFit.cover)
+                          : Image.file(selectedImageFile!, height: 180, fit: BoxFit.cover),
+                    ),
                   ],
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   SizedBox(
                     width: double.infinity,
-                    height: 45,
+                    height: 55,
                     child: ElevatedButton(
                       onPressed: addProduct,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                      ),
-                      child: const Text(
-                        "اضف المنتج",
-                        style: TextStyle(color: Colors.white, fontSize: 18),
-                      ),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                      child: const Text("إضافة المنتج", style: TextStyle(color: Colors.white, fontSize: 18)),
                     ),
                   ),
 

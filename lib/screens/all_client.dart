@@ -154,10 +154,10 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
   }
 
   void _editClient(Client client) {
-    final _nameController = TextEditingController(text: client.name);
-    final _phoneController = TextEditingController(text: client.phone);
-    final _addressController = TextEditingController(text: client.address);
-    bool _newClient = client.newClient;
+    final nameController = TextEditingController(text: client.name);
+    final phoneController = TextEditingController(text: client.phone);
+    final addressController = TextEditingController(text: client.address);
+    bool newClient = client.newClient;
 
     showDialog(
       context: context,
@@ -185,11 +185,11 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
                   ),
                   const SizedBox(height: 20),
-                  _buildTextField(_nameController, "الاسم", Icons.person),
+                  _buildTextField(nameController, "الاسم", Icons.person),
                   const SizedBox(height: 15),
-                  _buildTextField(_phoneController, "الهاتف", Icons.phone, TextInputType.phone),
+                  _buildTextField(phoneController, "الهاتف", Icons.phone, TextInputType.phone),
                   const SizedBox(height: 15),
-                  _buildTextField(_addressController, "العنوان", Icons.location_on),
+                  _buildTextField(addressController, "العنوان", Icons.location_on),
                   const SizedBox(height: 15),
                   Container(
                     decoration: BoxDecoration(
@@ -198,10 +198,10 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                       border: Border.all(color: Colors.blue.shade200),
                     ),
                     child: SwitchListTile(
-                      value: _newClient,
+                      value: newClient,
                       title: const Text("عميل جديد؟"),
-                      activeColor: Colors.blue.shade700,
-                      onChanged: (value) => setState(() => _newClient = value),
+                      activeThumbColor: Colors.blue.shade700,
+                      onChanged: (value) => setState(() => newClient = value),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -220,8 +220,8 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                       ElevatedButton(
                         onPressed: () async {
                           final errorMessage = await _clientsService.validateClient(
-                            name: _nameController.text,
-                            phone: _phoneController.text,
+                            name: nameController.text,
+                            phone: phoneController.text,
                             clientId: client.id,
                           );
                           if (errorMessage != null) {
@@ -231,10 +231,10 @@ class _AllClientState extends State<AllClient> with SingleTickerProviderStateMix
                             return;
                           }
                           final updatedClient = Client(
-                            name: _nameController.text,
-                            phone: _phoneController.text,
-                            address: _addressController.text,
-                            newClient: _newClient,
+                            name: nameController.text,
+                            phone: phoneController.text,
+                            address: addressController.text,
+                            newClient: newClient,
                           );
                           try {
                             await _clientsService.updateClient(client.id!, updatedClient);

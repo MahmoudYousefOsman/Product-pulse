@@ -282,7 +282,7 @@ class _AddClientScreenState extends State<AddClientScreen>
                   ),
                 ],
               ),
-              activeColor: primaryBlue,
+              activeThumbColor: primaryBlue,
               onChanged: (value) {
                 setState(() {
                   _newClient = value;
