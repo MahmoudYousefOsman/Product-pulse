@@ -11,6 +11,8 @@ import 'package:software_system/screens/missing_products.dart';
 import 'package:software_system/screens/prodect_move_ment.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../screens/orders_list_screen.dart';
+
 class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
 
@@ -27,41 +29,32 @@ class _CustomDrawerState extends State<CustomDrawer> {
     });
   }
 
-  // ============ زرار تسجيل الخروج ============
+  // ============ تسجيل الخروج ============
   Future<void> _logout() async {
     final supabase = Supabase.instance.client;
 
     try {
-      // حذف التوكن من الذاكرة
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('auth_token'); // غيّر اسم الـ key حسب استخدامك
-      
-      // تسجيل الخروج من Supabase
+      await prefs.remove('auth_token');
+
       await supabase.auth.signOut();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("تم تسجيل الخروج بنجاح"),
-          duration: Duration(seconds: 1),
-        ),
+        const SnackBar(content: Text("تم تسجيل الخروج بنجاح")),
       );
 
-      await Future.delayed(const Duration(seconds: 1));
-
-      // الانتقال إلى صفحة تسجيل الدخول
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const Login_screen()),
+          MaterialPageRoute(builder: (_) => const Login_screen()),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("خطأ أثناء تسجيل الخروج: $e")),
+        SnackBar(content: Text("خطأ: $e")),
       );
     }
   }
-  // ===========================================
 
   @override
   Widget build(BuildContext context) {
@@ -70,23 +63,22 @@ class _CustomDrawerState extends State<CustomDrawer> {
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: 20),
         children: [
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(
-              color: Color(0xFF272C36),
-            ),
-            currentAccountPicture: const CircleAvatar(
+          const UserAccountsDrawerHeader(
+            decoration: BoxDecoration(color: Color(0xFF272C36)),
+            currentAccountPicture: CircleAvatar(
               backgroundImage: AssetImage("assets/Images/smart_inventory.png"),
             ),
-            accountName: const Text(
+            accountName: Text(
               "404 Error Team",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            accountEmail: const Text("404error@gmail.com"),
+            accountEmail: Text("404error@gmail.com"),
           ),
 
           _drawerItem(
             title: "لوحة التحكم",
             icon: Icons.dashboard_outlined,
+            onTap: () => Navigator.pop(context),
           ),
 
           _expandableItem(
@@ -116,7 +108,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
             children: [
               _subItem("كل المنتجات", Icons.list, const AllProdect()),
               _subItem("إضافة منتج", Icons.add, const AddProductScreen()),
-              _subItem("حركة المنتج", Icons.swap_horiz,  ProductMovementsScreen()),
+              _subItem("حركة المنتج", Icons.swap_horiz, ProductMovementsScreen()),
               _subItem("المنتجات الناقصة", Icons.warning_amber_outlined, const MissingProducts()),
             ],
           ),
@@ -124,21 +116,29 @@ class _CustomDrawerState extends State<CustomDrawer> {
           _drawerItem(
             title: "المشتريات",
             icon: Icons.shopping_bag_outlined,
+            onTap: () => Navigator.pop(context),
           ),
 
           _drawerItem(
             title: "أوردرات",
             icon: Icons.shopping_cart_outlined,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const OrdersListScreen()),
+              );
+            },
           ),
 
           _drawerItem(
             title: "الإعدادات",
             icon: Icons.settings_outlined,
+            onTap: () => Navigator.pop(context),
           ),
 
           const Divider(color: Colors.white54, height: 30),
 
-          // ========== زرار تسجيل الخروج ==========
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.redAccent),
             title: const Text(
@@ -153,16 +153,23 @@ class _CustomDrawerState extends State<CustomDrawer> {
     );
   }
 
-  Widget _drawerItem({required String title, required IconData icon}) {
+  // ========== Drawer Item ==========
+  Widget _drawerItem({
+    required String title,
+    required IconData icon,
+    VoidCallback? onTap,
+  }) {
     return ListTile(
       leading: Icon(icon, color: Colors.white),
       title: Text(
         title,
         style: const TextStyle(color: Colors.white, fontSize: 20),
       ),
+      onTap: onTap,
     );
   }
 
+  // ========== Expandable Item ==========
   Widget _expandableItem({
     required String title,
     required IconData icon,
@@ -193,6 +200,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
     );
   }
 
+  // ========== Sub Item ==========
   Widget _subItem(String title, IconData icon, Widget page) {
     return ListTile(
       leading: Icon(icon, color: Colors.white70, size: 20),
@@ -204,7 +212,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
         Navigator.pop(context);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => page),
+          MaterialPageRoute(builder: (_) => page),
         );
       },
     );

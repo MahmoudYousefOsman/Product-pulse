@@ -19,8 +19,8 @@ class Client {
 
   factory Client.fromMap(Map<String, dynamic> map) {
     return Client(
-      id: map['id'],
-      name: map['name'],
+      id: map['id'] as int?,
+      name: map['name'] ?? '',
       phone: map['phone'],
       address: map['address'],
       newClient: map['new_client'] ?? true,
@@ -35,10 +35,31 @@ class Client {
 
   Map<String, dynamic> toMap() {
     return {
+      if (id != null) 'id': id,
       'name': name,
       'phone': phone,
       'address': address,
       'new_client': newClient,
     };
+  }
+
+  Client copyWith({
+    int? id,
+    String? name,
+    String? phone,
+    String? address,
+    bool? newClient,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Client(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      address: address ?? this.address,
+      newClient: newClient ?? this.newClient,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 }
