@@ -9,9 +9,9 @@ import 'package:software_system/screens/all_prodect.dart';
 import 'package:software_system/screens/all_suppliers_screens.dart';
 import 'package:software_system/screens/missing_products.dart';
 import 'package:software_system/screens/prodect_move_ment.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ستبقى هنا للسلامة
 import 'package:software_system/screens/new_order_screen.dart';
-
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // **تم الإضافة**
 
 import '../screens/orders_list_screen.dart';
 
@@ -24,6 +24,7 @@ class CustomDrawer extends StatefulWidget {
 
 class _CustomDrawerState extends State<CustomDrawer> {
   String? expandedItem;
+  final secureStorage = const FlutterSecureStorage(); // **تعريف الـ Storage**
 
   void toggleExpand(String key) {
     setState(() {
@@ -31,29 +32,39 @@ class _CustomDrawerState extends State<CustomDrawer> {
     });
   }
 
-  // ============ تسجيل الخروج ============
+  // ============ دالة تسجيل الخروج المُعدلة ============
   Future<void> _logout() async {
     final supabase = Supabase.instance.client;
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('auth_token');
+      // 1. مسح التوكنات من flutter_secure_storage
+      await secureStorage.delete(key: 'accessToken');
+      await secureStorage.delete(key: 'refreshToken');
 
+      // 2. مسح جلسة Supabase
       await supabase.auth.signOut();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("تم تسجيل الخروج بنجاح")),
+        const SnackBar(
+          content: Text("تم تسجيل الخروج بنجاح ✅"),
+          backgroundColor: Colors.green,
+        ),
       );
 
       if (mounted) {
-        Navigator.pushReplacement(
+        // 3. التوجيه إلى شاشة تسجيل الدخول وإزالة كل الصفحات السابقة
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const Login_screen()),
+          (Route<dynamic> route) => false,
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("خطأ: $e")),
+        SnackBar(
+          content: Text("خطأ أثناء تسجيل الخروج: $e ❌"),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     }
   }
@@ -116,7 +127,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
           ),
 
 
-_expandableItem(
+          _expandableItem(
             title: "أوردرات",
             icon: Icons.shopping_cart_outlined,
             keyValue: "orders",
@@ -129,6 +140,7 @@ _expandableItem(
 
           const Divider(color: Colors.white54, height: 30),
 
+          // **ربط زر تسجيل الخروج بالدالة المعدلة**
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.redAccent),
             title: const Text(

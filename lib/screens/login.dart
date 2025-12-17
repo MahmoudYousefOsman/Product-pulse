@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:software_system/screens/all_prodect.dart';
-import 'package:software_system/screens/forget_password.dart';
+import 'package:software_system/screens/forget_password.dart'; // هذا الـ import يمكن إزالته إذا لم يعد يُستخدم في مكان آخر
 import 'package:software_system/widgets/animation_logo.dart';
 import 'package:software_system/widgets/custom_text_filed.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -23,7 +23,7 @@ class _Login_screenState extends State<Login_screen> {
   final TextEditingController password = TextEditingController();
   bool rememberMe = false;
   bool isloaded = false;
-  // 1. المتغير الجديد للتحكم في إخفاء/إظهار كلمة السر
+  // المتغير للتحكم في إخفاء/إظهار كلمة السر
   bool _isPasswordObscured = true;
 
   final storage = const FlutterSecureStorage();
@@ -53,7 +53,7 @@ class _Login_screenState extends State<Login_screen> {
     }
   }
 
-  // 2. دالة لتبديل حالة الإخفاء/الإظهار
+  // دالة لتبديل حالة الإخفاء/الإظهار
   void _togglePasswordVisibility() {
     setState(() {
       _isPasswordObscured = !_isPasswordObscured;
@@ -198,7 +198,7 @@ class _Login_screenState extends State<Login_screen> {
                     CustomTextField(
                       controller: email,
                       hintText: "name@gmail.com",
-                      prefixIcon: CupertinoIcons.mail_solid, // هنا استخدمنا CupertinoIcons
+                      prefixIcon: CupertinoIcons.mail_solid,
                     ),
 
                     const SizedBox(height: 10),
@@ -220,22 +220,20 @@ class _Login_screenState extends State<Login_screen> {
                     CustomTextField(
                       controller: password,
                       hintText: "........",
-                      prefixIcon: CupertinoIcons.lock_fill, // هنا استخدمنا CupertinoIcons
-                      // **التعديل رقم 3: استخدام المتغير للتحكم في الإخفاء**
-                      obscureText: _isPasswordObscured, 
-                      // **التعديل رقم 4: إضافة زر العين لـ suffixIcon**
+                      prefixIcon: CupertinoIcons.lock_fill,
+                      obscureText: _isPasswordObscured, // التحكم في الإخفاء
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isPasswordObscured
-                              ? CupertinoIcons.eye_slash_fill // عين مغلقة (إخفاء)
-                              : CupertinoIcons.eye_fill, // عين مفتوحة (إظهار)
+                              ? CupertinoIcons.eye_slash_fill // عين مغلقة
+                              : CupertinoIcons.eye_fill, // عين مفتوحة
                           color: const Color(0xff97989f),
                         ),
-                        onPressed: _togglePasswordVisibility, // ربط الدالة بالضغط
+                        onPressed: _togglePasswordVisibility, // ربط الدالة
                       ),
                     ),
 
-                    // تذكرني (مع إزالة "هل نسيت كلمة السر؟")
+                    // تذكرني (بدون "هل نسيت كلمة السر؟")
                     Row(
                       children: [
                         Transform.scale(
@@ -258,7 +256,7 @@ class _Login_screenState extends State<Login_screen> {
                           ),
                         ),
                         const Spacer(), // سيأخذ كل المساحة المتبقية
-                        // **التعديل رقم 5: تم حذف GestureDetector الخاص بـ "هل نسيت كلمة السر؟"**
+                        // تم إزالة GestureDetector الخاص بـ "هل نسيت كلمة السر؟"
                         const SizedBox(width: 15),
                       ],
                     ),
@@ -299,7 +297,7 @@ class _Login_screenState extends State<Login_screen> {
                                       ),
                                       SizedBox(width: 5),
                                       Icon(
-                                        CupertinoIcons.arrow_right, // هنا استخدمنا CupertinoIcons
+                                        CupertinoIcons.arrow_right,
                                         color: Colors.white,
                                       ),
                                     ],
