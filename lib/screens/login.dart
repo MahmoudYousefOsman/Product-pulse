@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:software_system/screens/all_prodect.dart';
+import 'package:software_system/screens/forget_password.dart';
 import 'package:software_system/widgets/animation_logo.dart';
 import 'package:software_system/widgets/custom_text_filed.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -22,15 +23,41 @@ class _Login_screenState extends State<Login_screen> {
   final TextEditingController password = TextEditingController();
   bool rememberMe = false;
   bool isloaded = false;
-  bool _obscurePassword = true;
+  // 1. المتغير الجديد للتحكم في إخفاء/إظهار كلمة السر
+  bool _isPasswordObscured = true;
 
   final storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
-    // ما نشيك على التوكنات في initState
-    // الشيك بيكون في main أو splash screen
+    _checkStoredTokens();
+  }
+
+  Future<void> _checkStoredTokens() async {
+    String? accessToken = await storage.read(key: 'accessToken');
+    String? refreshToken = await storage.read(key: 'refreshToken');
+
+    print('AccessToken: $accessToken');
+    print('RefreshToken: $refreshToken');
+
+    if (accessToken != null && refreshToken != null) {
+      Navigator.pushReplacement(
+        context,
+        PageTransition(
+          type: PageTransitionType.rightToLeft,
+          child: const AllProdect(),
+          duration: const Duration(milliseconds: 400),
+        ),
+      );
+    }
+  }
+
+  // 2. دالة لتبديل حالة الإخفاء/الإظهار
+  void _togglePasswordVisibility() {
+    setState(() {
+      _isPasswordObscured = !_isPasswordObscured;
+    });
   }
 
   Future<void> _handleLogin() async {
@@ -60,71 +87,49 @@ class _Login_screenState extends State<Login_screen> {
       );
 
       if (response.user != null) {
+        // تخزين التوكنات لو rememberMe مفعّل
         if (rememberMe) {
-          // حفظ التوكنات فقط إذا اختار المستخدم "تذكرني"
-          await storage.write(
-            key: 'accessToken',
-            value: response.session?.accessToken,
-          );
-          await storage.write(
-            key: 'refreshToken',
-            value: response.session?.refreshToken,
-          );
-        } else {
-          // حذف أي توكنات قديمة إذا لم يختر "تذكرني"
-          await storage.delete(key: 'accessToken');
-          await storage.delete(key: 'refreshToken');
+          await storage.write(key: 'accessToken', value: response.session?.accessToken);
+          await storage.write(key: 'refreshToken', value: response.session?.refreshToken);
         }
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تم تسجيل الدخول بنجاح ✅'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-
-          await Future.delayed(const Duration(milliseconds: 500));
-
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              PageTransition(
-                type: PageTransitionType.rightToLeft,
-                child: const AllProdect(),
-                duration: const Duration(milliseconds: 400),
-              ),
-            );
-          }
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('فشل تسجيل الدخول ❌'),
-              backgroundColor: Colors.redAccent,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
-    } catch (error) {
-      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('حدث خطأ: $error'),
+          const SnackBar(
+            content: Text('تم تسجيل الدخول بنجاح ✅'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          PageTransition(
+            type: PageTransitionType.rightToLeft,
+            child: const AllProdect(),
+            duration: const Duration(milliseconds: 400),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('فشل تسجيل الدخول ❌'),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('حدث خطأ: $error'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          isloaded = false;
-        });
-      }
+      setState(() {
+        isloaded = false;
+      });
     }
   }
 
@@ -193,7 +198,7 @@ class _Login_screenState extends State<Login_screen> {
                     CustomTextField(
                       controller: email,
                       hintText: "name@gmail.com",
-                      prefixIcon: CupertinoIcons.mail_solid,
+                      prefixIcon: CupertinoIcons.mail_solid, // هنا استخدمنا CupertinoIcons
                     ),
 
                     const SizedBox(height: 10),
@@ -212,29 +217,25 @@ class _Login_screenState extends State<Login_screen> {
                         ),
                       ),
                     ),
-
-                    // 👁️ هنا يظهر زر العين
                     CustomTextField(
                       controller: password,
                       hintText: "........",
-                      prefixIcon: CupertinoIcons.lock_fill,
-                      obscureText: _obscurePassword,
-                      suffixIcon: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                        child: Icon(
-                          _obscurePassword
-                              ? CupertinoIcons.eye_slash_fill
-                              : CupertinoIcons.eye_fill,
-                          color: Colors.grey,
+                      prefixIcon: CupertinoIcons.lock_fill, // هنا استخدمنا CupertinoIcons
+                      // **التعديل رقم 3: استخدام المتغير للتحكم في الإخفاء**
+                      obscureText: _isPasswordObscured, 
+                      // **التعديل رقم 4: إضافة زر العين لـ suffixIcon**
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordObscured
+                              ? CupertinoIcons.eye_slash_fill // عين مغلقة (إخفاء)
+                              : CupertinoIcons.eye_fill, // عين مفتوحة (إظهار)
+                          color: const Color(0xff97989f),
                         ),
+                        onPressed: _togglePasswordVisibility, // ربط الدالة بالضغط
                       ),
                     ),
 
-                    // تذكرني ونسيت كلمة السر
+                    // تذكرني (مع إزالة "هل نسيت كلمة السر؟")
                     Row(
                       children: [
                         Transform.scale(
@@ -256,7 +257,8 @@ class _Login_screenState extends State<Login_screen> {
                             color: Color(0xff97989f),
                           ),
                         ),
-                        const Spacer(),
+                        const Spacer(), // سيأخذ كل المساحة المتبقية
+                        // **التعديل رقم 5: تم حذف GestureDetector الخاص بـ "هل نسيت كلمة السر؟"**
                         const SizedBox(width: 15),
                       ],
                     ),
@@ -285,8 +287,7 @@ class _Login_screenState extends State<Login_screen> {
                                     color: Colors.white,
                                   )
                                 : Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: const [
                                       Text(
                                         "تسجيل الدخول ",
@@ -298,7 +299,7 @@ class _Login_screenState extends State<Login_screen> {
                                       ),
                                       SizedBox(width: 5),
                                       Icon(
-                                        CupertinoIcons.arrow_right,
+                                        CupertinoIcons.arrow_right, // هنا استخدمنا CupertinoIcons
                                         color: Colors.white,
                                       ),
                                     ],

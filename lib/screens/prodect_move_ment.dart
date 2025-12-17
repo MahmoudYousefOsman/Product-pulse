@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProductMovementsScreen extends StatefulWidget {
+  const ProductMovementsScreen({super.key});
+
   @override
-  _ProductMovementsScreenState createState() => _ProductMovementsScreenState();
+  State<ProductMovementsScreen> createState() =>
+      _ProductMovementsScreenState();
 }
 
 class _ProductMovementsScreenState extends State<ProductMovementsScreen> {
@@ -28,163 +31,229 @@ class _ProductMovementsScreenState extends State<ProductMovementsScreen> {
         loading = false;
       });
     } catch (e) {
-      print("Supabase Error: $e");
       setState(() => loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final primaryBlue = Colors.blue.shade700;
+
     return Scaffold(
-        appBar: AppBar(
-          title: const Text("حركات المنتجات"),
-          centerTitle: true,
-          backgroundColor: Colors.blueAccent,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.blue.shade700,
+              Colors.blue.shade500,
+              Colors.blue.shade300,
+            ],
+          ),
         ),
-        body: loading
-            ? const Center(child: CircularProgressIndicator())
-            : transactions.isEmpty
-            ? const Center(child: Text("لا توجد حركات حتى الآن"))
-            : Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: ListView.builder(
-              itemCount: transactions.length,
-              itemBuilder: (context, index) {
-                final item = transactions[index];
+        child: SafeArea(
+          child: Column(
+            children: [
+              /// ===== Header =====
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back,
+                            color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    const Text(
+                      "حركات المنتجات",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-                final String productName =
-                    item['products']?['name'] ?? 'غير معروف';
-                final String model =
-                (item['model'] ?? "").toString().toLowerCase();
-                final String type = item['type'] ?? "in"; // in / out
-                final int quantity = item['quantity'] ?? 0;
-                final String createdAt =
-                    item['created_at']?.toString().substring(0, 16) ?? "";
-
-
-                String transactionType;
-                Color typeColor;
-
-                switch (model) {
-                  case "stock":
-                    transactionType = "رصيد افتتاحي";
-                    typeColor = Colors.green;
-                    break;
-                  case "orders":
-                    transactionType = "أوردر";
-                    typeColor = Colors.red;
-                    break;
-                  case "purchases":
-                    transactionType = "مشتريات";
-                    typeColor = Colors.green;
-                    break;
-                  default:
-                    transactionType = "غير معروف";
-                    typeColor = Colors.grey;
-                }
-
-
-                Color backgroundColor = typeColor.withOpacity(0.15);
-
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      children: [
-
-                        Expanded(
-                          flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                productName,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                transactionType,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: typeColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(width: 10),
-
-
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            decoration: BoxDecoration(
-                              color: backgroundColor,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: typeColor),
-                            ),
-                            child: Center(
-                              child: Text(
-                                type == "in" ? "وارد" : "صادر",
-                                style: TextStyle(
-                                  color: typeColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 10),
-
-
-                        Expanded(
-                          flex: 1,
-                          child: Center(
-                            child: Text(
-                              quantity.toString(),
-                              style: TextStyle(
-                                color: typeColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 10),
-
-
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            createdAt,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
+              /// ===== Content =====
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(40),
+                      topRight: Radius.circular(40),
                     ),
                   ),
-                );
-              },
-            ),
-            ),
-        );
-    }
+                  child: loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : transactions.isEmpty
+                          ? const Center(
+                              child: Text("لا توجد حركات حتى الآن"),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(20),
+                              itemCount: transactions.length,
+                              itemBuilder: (context, index) {
+                                final item = transactions[index];
+
+                                final productName =
+                                    item['products']?['name'] ?? 'غير معروف';
+
+                                final model = (item['model'] ?? "")
+                                    .toString()
+                                    .toLowerCase();
+
+                                final type = item['type'] ?? "in";
+                                final quantity = item['quantity'] ?? 0;
+                                final createdAt = item['created_at']
+                                        ?.toString()
+                                        .substring(0, 16) ??
+                                    "";
+
+                                String title;
+                                Color color;
+                                IconData icon;
+
+                                switch (model) {
+                                  case "stock":
+                                    title = "رصيد افتتاحي";
+                                    color = Colors.green;
+                                    icon = Icons.inventory;
+                                    break;
+                                  case "orders":
+                                    title = "أوردر";
+                                    color = Colors.red;
+                                    icon = Icons.shopping_cart;
+                                    break;
+                                  case "purchases":
+                                    title = "مشتريات";
+                                    color = Colors.blue;
+                                    icon = Icons.shopping_bag;
+                                    break;
+                                  default:
+                                    title = "غير معروف";
+                                    color = Colors.grey;
+                                    icon = Icons.help_outline;
+                                }
+
+                                // تحديد لون الخلفية للمربع بالكامل
+                                Color backgroundColor;
+                                if (model == "orders" && type == "in") {
+                                  backgroundColor = Colors.green.withOpacity(0.15);
+                                } else {
+                                  backgroundColor = color.withOpacity(0.08);
+                                }
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 15),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: backgroundColor,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: color, width: 1),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      /// Icon
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: color.withOpacity(0.15),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(icon, color: color),
+                                      ),
+
+                                      const SizedBox(width: 15),
+
+                                      /// Info
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              productName,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              title,
+                                              style: TextStyle(
+                                                color: color,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              createdAt,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      /// Quantity
+                                      Column(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: type == "in"
+                                                  ? Colors.green.withOpacity(0.15)
+                                                  : Colors.red.withOpacity(0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              type == "in" ? "وارد" : "صادر",
+                                              style: TextStyle(
+                                                color: type == "in"
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            quantity.toString(),
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: primaryBlue,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

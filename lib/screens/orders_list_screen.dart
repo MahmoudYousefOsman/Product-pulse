@@ -3,6 +3,15 @@ import '../service/order_service.dart';
 import '../models/order_model.dart';
 import 'new_order_screen.dart';
 import 'invoice_screen.dart';
+// بما أن صفحة AllProdect تستخدم CustomDrawer، قد تحتاج إلى استيرادها هنا إذا كانت موجودة
+// import 'package:software_system/widgets/custom_drawer.dart'; 
+
+// تعريف الألوان المستخدمة لضمان الثبات
+const Color _kPrimaryColor = Color(0xFF6C63FF); // اللون الأساسي (بنفسجي/أزرق غامق)
+const Color _kGradientEndColor = Color(0xFF8D88FF); // تدرج فاتح للون الأساسي
+const Color _kAccentColor = Color(0xFF1ABC9C); // لون التمييز/الإجمالي (أخضر فيروزي)
+const Color _kListBackgroundColor = Color(0xFFF8F9FF); // خلفية منطقة القائمة (فاتح جداً)
+
 
 class OrdersListScreen extends StatefulWidget {
   const OrdersListScreen({super.key});
@@ -11,111 +20,50 @@ class OrdersListScreen extends StatefulWidget {
   State<OrdersListScreen> createState() => _OrdersListScreenState();
 }
 
-class _OrdersListScreenState extends State<OrdersListScreen> with TickerProviderStateMixin {
+class _OrdersListScreenState extends State<OrdersListScreen> with SingleTickerProviderStateMixin {
   late Future<List<Order>> _ordersFuture;
   final OrderService _orderService = OrderService();
-  late AnimationController _fabAnimationController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
-    _ordersFuture = _orderService.fetchOrdersList();
-    _fabAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+    _refreshOrders();
+    _searchController.addListener(_updateSearchQuery);
+    _animationController = AnimationController(
       vsync: this,
+      duration: const Duration(milliseconds: 300),
     );
-    _fabAnimationController.forward();
   }
 
   @override
   void dispose() {
-    _fabAnimationController.dispose();
+    _searchController.removeListener(_updateSearchQuery);
+    _searchController.dispose();
+    _animationController.dispose();
     super.dispose();
+  }
+
+  void _updateSearchQuery() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase();
+    });
   }
 
   void _refreshOrders() {
     setState(() {
-      _ordersFuture = _orderService.fetchOrdersList();
+      _ordersFuture = _orderService.fetchOrdersList().then((orders) {
+        if (orders.isNotEmpty && _animationController.status != AnimationStatus.forward) {
+             _animationController.forward(from: 0);
+        }
+        return orders;
+      });
     });
   }
 
-  void _confirmDeleteOrder(int orderId) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'تأكيد الحذف',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-            ),
-          ],
-        ),
-        content: const Text(
-          'هل أنت متأكد أنك تريد مسح هذا الطلب؟ لن تتمكن من استرجاعه.',
-          style: TextStyle(fontSize: 15, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-            child: Text(
-              'إلغاء',
-              style: TextStyle(
-                color: Colors.grey[700],
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Colors.red, Colors.redAccent],
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                Navigator.of(ctx).pop();
-                try {
-                  await _orderService.deleteOrder(orderId);
-                  _refreshOrders();
-                  _showSnackbar('تم مسح الطلب بنجاح ✓', Colors.green);
-                } catch (e) {
-                  _showSnackbar('فشل مسح الطلب: $e', Colors.red);
-                }
-              },
-              icon: const Icon(Icons.delete_forever, size: 20),
-              label: const Text(
-                'حذف',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // دالة عرض رسالة عائمة
   void _showSnackbar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -143,6 +91,78 @@ class _OrdersListScreenState extends State<OrdersListScreen> with TickerProvider
     );
   }
 
+  // دالة تأكيد الحذف
+  void _confirmDeleteOrder(int orderId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Text('تأكيد الحذف', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: const Text('هل أنت متأكد أنك تريد مسح هذا الطلب؟ لن تتمكن من استرجاعه.', style: TextStyle(fontSize: 15, height: 1.5)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text('إلغاء', style: TextStyle(color: Colors.grey[700], fontSize: 16, fontWeight: FontWeight.w600)),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Colors.red, Colors.redAccent]),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                try {
+                  await _orderService.deleteOrder(orderId);
+                  _refreshOrders();
+                  _showSnackbar('تم مسح الطلب بنجاح ✓', Colors.green);
+                } catch (e) {
+                  _showSnackbar('فشل مسح الطلب: $e', Colors.red);
+                }
+              },
+              icon: const Icon(Icons.delete_forever, size: 20),
+              label: const Text('حذف', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ويدجت زر الإجراءات داخل البطاقة (مثل صفحة المنتجات)
+  Widget _buildActionIcon({required IconData icon, required Color color, required VoidCallback onTap}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: color, size: 22),
+        onPressed: onTap,
+      ),
+    );
+  }
+
+  // ============================ بطاقة الطلب (Card) بتصميم جديد ============================
   Widget _buildOrderCard(Order order) {
     final clientName = order.client?.name ?? 'عميل غير معروف';
     final orderIdLabel = 'ORD-${order.id}';
@@ -150,495 +170,283 @@ class _OrdersListScreenState extends State<OrdersListScreen> with TickerProvider
     final date = order.createdAt.toString().split(' ')[0];
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 4.0),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.white, const Color(0xFFF8F9FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6C63FF).withOpacity(0.15),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF8D88FF)],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF6C63FF).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.receipt_long, color: Colors.white, size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        orderIdLabel,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
-                      const SizedBox(width: 6),
-                      Text(
-                        date,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              height: 2,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF6C63FF).withOpacity(0.5),
-                    Colors.transparent,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(1),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                _buildInfoItem(
-                  icon: Icons.person_rounded,
-                  label: 'العميل',
-                  value: clientName,
-                  color: const Color(0xFF6C63FF),
-                ),
-                const SizedBox(width: 16),
-                _buildInfoItem(
-                  icon: Icons.payments_rounded,
-                  label: 'الإجمالي',
-                  value: total,
-                  color: const Color(0xFF1ABC9C),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _buildActionButton(
-                  icon: Icons.visibility_rounded,
-                  label: 'عرض التفاصيل',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF8D88FF)],
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => InvoiceScreen(orderId: order.id),
-                      ),
-                    ).then((_) => _refreshOrders());
-                  },
-                ),
-                const SizedBox(width: 12),
-                _buildActionButton(
-                  icon: Icons.delete_rounded,
-                  label: 'حذف',
-                  gradient: const LinearGradient(
-                    colors: [Colors.red, Colors.redAccent],
-                  ),
-                  onPressed: () => _confirmDeleteOrder(order.id),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.2)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(icon, size: 18, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required Gradient gradient,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: (gradient as LinearGradient).colors.first.withOpacity(0.3),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        label: Text(
-          label,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            // فتح شاشة التفاصيل (InvoiceScreen)
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => InvoiceScreen(orderId: order.id)),
+            ).then((_) => _refreshOrders());
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // أيقونة الطلب (مثل صورة المنتج)
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_kPrimaryColor, _kGradientEndColor],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _kPrimaryColor.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.receipt_long, color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 16),
+                
+                // تفاصيل الطلب (الاسم والسعر)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        clientName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        orderIdLabel,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          // الإجمالي
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _kAccentColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.monetization_on, color: _kAccentColor, size: 14),
+                                const SizedBox(width: 4),
+                                Text(
+                                  total,
+                                  style: TextStyle(
+                                    color: _kAccentColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // التاريخ
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.calendar_today, color: Colors.grey[600], size: 12),
+                                const SizedBox(width: 4),
+                                Text(
+                                  date,
+                                  style: TextStyle(
+                                    color: Colors.grey[700],
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                
+                // زر عرض (View)
+                _buildActionIcon(
+                  icon: Icons.visibility,
+                  color: _kPrimaryColor,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => InvoiceScreen(orderId: order.id)),
+                    ).then((_) => _refreshOrders());
+                  },
+                ),
+                const SizedBox(width: 8),
+                
+                // زر الحذف (Delete)
+                _buildActionIcon(
+                  icon: Icons.delete_outline,
+                  color: Colors.red.shade600!,
+                  onTap: () => _confirmDeleteOrder(order.id),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
+  
+  // ============================ بناء الشاشة الرئيسية ============================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      // يمكن إضافة CustomDrawer هنا إذا كان مستخدماً في التطبيق
+      // drawer: const CustomDrawer(),
       appBar: AppBar(
-        elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF6C63FF), Color(0xFF8D88FF)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
+              colors: [_kPrimaryColor, _kGradientEndColor], // #6C63FF -> #8D88FF
             ),
           ),
         ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.shopping_bag, size: 22),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'قائمة الطلبات',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          "قائمة الطلبات",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
         ),
-        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.refresh_rounded, size: 24),
-                onPressed: _refreshOrders,
-                tooltip: 'تحديث',
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            onPressed: _refreshOrders,
+            tooltip: 'تحديث',
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 8.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(
-                    builder: (context) => const NewOrderScreen(),
-                  ))
-                      .then((_) => _refreshOrders());
-                },
-                icon: const Icon(Icons.add_circle_outline, size: 22),
-                label: const Text(
-                  'طلب جديد',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  foregroundColor: const Color(0xFF6C63FF),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  elevation: 0,
-                ),
-              ),
-            ),
-          ),
+          const SizedBox(width: 10),
         ],
       ),
-      body: FutureBuilder<List<Order>>(
-        future: _ordersFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6C63FF)),
-                    strokeWidth: 3,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'جاري تحميل الطلبات...',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                margin: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.red.withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
+      body: Container(
+        // الخلفية الرئيسية بتدرج الألوان
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_kPrimaryColor, _kGradientEndColor],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // قسم العنوان الفرعي
+              Container(
+                padding: const EdgeInsets.all(20),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.red,
-                      ),
+                    const Row(
+                      children: [
+                        Icon(Icons.shopping_bag, color: Colors.white, size: 28),
+                        SizedBox(width: 10),
+                        Text(
+                          "إدارة المبيعات",
+                          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'خطأ في تحميل الطلبات',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
-                      '${snapshot.error}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                      textAlign: TextAlign.center,
+                      "كل الطلبات والفواتير الصادرة",
+                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
                     ),
                   ],
                 ),
               ),
-            );
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Container(
-                padding: const EdgeInsets.all(40),
-                margin: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.white, const Color(0xFFF8F9FF)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF6C63FF).withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+              
+              // شريط البحث وزر الإضافة
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFF6C63FF).withOpacity(0.1),
-                            const Color(0xFF8D88FF).withOpacity(0.05),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
                           ],
                         ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.inventory_2_outlined,
-                        size: 80,
-                        color: const Color(0xFF6C63FF).withOpacity(0.6),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'لا توجد طلبات حالياً',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'ابدأ بإنشاء طلب جديد الآن',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
+                        child: TextField(
+                          controller: _searchController,
+                          textAlign: TextAlign.right,
+                          decoration: InputDecoration(
+                            hintText: "ابحث باسم العميل أو رقم الطلب...",
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            prefixIcon: const Icon(Icons.search, color: _kPrimaryColor),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(width: 12),
+                    // زر الإضافة
                     Container(
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF6C63FF), Color(0xFF8D88FF)],
+                          colors: [_kPrimaryColor, _kGradientEndColor],
                         ),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF6C63FF).withOpacity(0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
+                            color: _kPrimaryColor.withOpacity(0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      child: ElevatedButton.icon(
+                      child: ElevatedButton(
                         onPressed: () {
                           Navigator.of(context)
                               .push(MaterialPageRoute(
@@ -646,38 +454,122 @@ class _OrdersListScreenState extends State<OrdersListScreen> with TickerProvider
                           ))
                               .then((_) => _refreshOrders());
                         },
-                        icon: const Icon(Icons.add_circle_outline, size: 24),
-                        label: const Text(
-                          'إنشاء طلب جديد',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
+                        child: const Icon(Icons.add, color: Colors.white, size: 28),
                       ),
                     ),
                   ],
                 ),
               ),
-            );
-          } else {
-            final orders = snapshot.data!;
-            return RefreshIndicator(
-              onRefresh: () async => _refreshOrders(),
-              color: const Color(0xFF6C63FF),
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: orders.length,
-                itemBuilder: (context, index) {
-                  return _buildOrderCard(orders[index]);
-                },
+              const SizedBox(height: 20),
+              
+              // قائمة الطلبات (المنطقة الفاتحة)
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: _kListBackgroundColor, // خلفية البطاقات الفاتحة
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                    child: FutureBuilder<List<Order>>(
+                      future: _ordersFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator(color: _kPrimaryColor));
+                        }
+                        
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Text("خطأ: ${snapshot.error}", style: const TextStyle(color: Colors.red, fontSize: 16)),
+                            ),
+                          );
+                        }
+
+                        var orders = snapshot.data ?? [];
+                        orders = orders.where((order) {
+                          final clientName = order.client?.name.toLowerCase() ?? '';
+                          final orderId = 'ord-${order.id}'.toLowerCase();
+                          return clientName.contains(_searchQuery) || orderId.contains(_searchQuery);
+                        }).toList();
+
+                        if (orders.isEmpty && _searchQuery.isEmpty) {
+                           return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey[400]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "لا توجد طلبات حالياً",
+                                  style: TextStyle(fontSize: 18, color: Colors.grey[600], fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                         if (orders.isEmpty && _searchQuery.isNotEmpty) {
+                            return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.search_off, size: 80, color: Colors.grey[400]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "لا توجد نتائج بحث",
+                                  style: TextStyle(fontSize: 18, color: Colors.grey[600], fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        
+                        return RefreshIndicator(
+                          onRefresh: () async => _refreshOrders(),
+                          color: _kPrimaryColor,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: orders.length,
+                            itemBuilder: (context, index) {
+                              final order = orders[index];
+                              
+                              return FadeTransition(
+                                opacity: _animationController,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.3, 0),
+                                    end: Offset.zero,
+                                  ).animate(CurvedAnimation(
+                                    parent: _animationController,
+                                    curve: Curves.easeOut,
+                                  )),
+                                  child: _buildOrderCard(order),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
               ),
-            );
-          }
-        },
+            ],
+          ),
+        ),
       ),
     );
   }

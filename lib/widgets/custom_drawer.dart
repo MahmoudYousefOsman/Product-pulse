@@ -10,6 +10,8 @@ import 'package:software_system/screens/all_suppliers_screens.dart';
 import 'package:software_system/screens/missing_products.dart';
 import 'package:software_system/screens/prodect_move_ment.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:software_system/screens/new_order_screen.dart';
+
 
 import '../screens/orders_list_screen.dart';
 
@@ -113,29 +115,17 @@ class _CustomDrawerState extends State<CustomDrawer> {
             ],
           ),
 
-          _drawerItem(
-            title: "المشتريات",
-            icon: Icons.shopping_bag_outlined,
-            onTap: () => Navigator.pop(context),
-          ),
 
-          _drawerItem(
+_expandableItem(
             title: "أوردرات",
             icon: Icons.shopping_cart_outlined,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const OrdersListScreen()),
-              );
-            },
+            keyValue: "orders",
+            children: [
+              _subItem("كل الاوردرات", Icons.list, const OrdersListScreen()),
+              _subItem("إضافة اوردر", Icons.add, NewOrderScreen()),
+            ],
           ),
-
-          _drawerItem(
-            title: "الإعدادات",
-            icon: Icons.settings_outlined,
-            onTap: () => Navigator.pop(context),
-          ),
+          
 
           const Divider(color: Colors.white54, height: 30),
 
