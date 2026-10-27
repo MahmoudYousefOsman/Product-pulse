@@ -1,27 +1,3 @@
-# software_system
-A new Flutter project.
-
-
-<img width="661" height="785" alt="Screen Shot 2026-10-27 at 5 56 09 PM" src="https://github.com/user-attachments/assets/5e93bf8b-c6b3-4793-b06d-a1db40365b0a" />
-
-<img width="661" height="785" alt="Screen Shot 2026-10-27 at 5 55 24 PM" src="https://github.com/user-attachments/assets/12097811-c7e5-474a-bb09-ebd957cf5bf0" />
-
-<img width="661" height="1048" alt="Screen Shot 2026-10-27 at 5 56 28 PM" src="https://github.com/user-attachments/assets/be3f158a-47dc-48d9-b2ab-99e32f9b8dec" />
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
-# Product-pulse
 # 📦 Enterprise Inventory & Sales Management Engine
 
 A robust, cross-platform ERP and inventory management solution engineered for seamless product tracking, sales workflows, and real-time financial data consistency across Android, iOS, and Web.
@@ -53,7 +29,7 @@ The application is built adhering to **Clean Architecture** principles to enforc
 - **Frontend:** Flutter (Dart) — Cross-Platform (Android, iOS, Web)
 - **Backend & Database:** Supabase (PostgreSQL, Realtime Subscriptions, Auth)
 - **Security:** Flutter Secure Storage (Encrypted Key-Value Store)
-- **State Management:** *[أضف اسم الـ State Management المستخدم زي Provider/Bloc/Riverpod]*
+- **State Management:** Provider / BLoC *(اختر ما يناسب مشروعك)*
 
 ---
 
@@ -61,3 +37,37 @@ The application is built adhering to **Clean Architecture** principles to enforc
 
 * **Data Consistency:** Managed concurrent inventory deductions during high-frequency sales transactions using transactional operations on PostgreSQL.
 * **State & Performance:** Optimized list rendering and asynchronous image caching to maintain 60 FPS across native and web builds.
+
+---
+
+## 📸 App Screenshots
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/5e93bf8b-c6b3-4793-b06d-a1db40365b0a" width="280" alt="Screen 1" />
+      <br />
+      <sub><b>Dashboard / Overview</b></sub>
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/12097811-c7e5-474a-bb09-ebd957cf5bf0" width="280" alt="Screen 2" />
+      <br />
+      <sub><b>Product Management</b></sub>
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/be3f158a-47dc-48d9-b2ab-99e32f9b8dec" width="280" alt="Screen 3" />
+      <br />
+      <sub><b>Sales & Invoicing</b></sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+## 🚀 Getting Started
+
+To get a local copy up and running, follow these simple steps:
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git](https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git)
