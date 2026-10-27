@@ -20,9 +20,20 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
 # Product-pulse
-# Product-pulse
-# Product-pulse
-# Product-pulse
-# Product-pulse
-# Product-pulse
+A cross-platform mobile application built as a graduation project for managing products, customers, suppliers, and sales operations efficiently.
+The project was developed using Flutter for Android, iOS, and Web, with Supabase as a backend solution (PostgreSQL, Authentication, and Realtime features), following Clean Architecture principles to ensure scalability and maintainability.
+
+Key Features:
+Secure authentication system with "Remember Me" functionality using Flutter Secure Storage.
+Full CRUD operations for product management (add, edit, delete, view) with support for local and online images.
+Customer and supplier management system integrated with the same structure as products.
+Complete order and invoice system including discounts and invoice generation.
+Product movement tracking (inbound / outbound inventory flow).
+Smart search functionality across all modules.
+Modern UI/UX design with smooth animations and enhanced user experience.
+
+This project provided hands-on experience in database design, system architecture using Supabase, and state management in Flutter. One of the key challenges was designing relational data models (Products, Orders, Clients) and ensuring clean separation of concerns in the application architecture.
+
+It was a real-world teamwork experience focused on building a scalable and production-ready system.
