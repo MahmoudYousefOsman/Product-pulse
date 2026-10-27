@@ -29,7 +29,7 @@ The application is built adhering to **Clean Architecture** principles to enforc
 - **Frontend:** Flutter (Dart) — Cross-Platform (Android, iOS, Web)
 - **Backend & Database:** Supabase (PostgreSQL, Realtime Subscriptions, Auth)
 - **Security:** Flutter Secure Storage (Encrypted Key-Value Store)
-- **State Management:** Provider / BLoC *(اختر ما يناسب مشروعك)*
+- **State Management:** Provider 
 
 ---
 
