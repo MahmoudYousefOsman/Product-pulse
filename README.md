@@ -4,6 +4,30 @@ A robust, cross-platform ERP and inventory management solution engineered for se
 
 ---
 
+## 📸 App Screenshots
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/5e93bf8b-c6b3-4793-b06d-a1db40365b0a" width="280" alt="Screen 1" />
+      <br />
+      <sub><b>Dashboard / Overview</b></sub>
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/12097811-c7e5-474a-bb09-ebd957cf5bf0" width="280" alt="Screen 2" />
+      <br />
+      <sub><b>Product Management</b></sub>
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/be3f158a-47dc-48d9-b2ab-99e32f9b8dec" width="280" alt="Screen 3" />
+      <br />
+      <sub><b>Sales & Invoicing</b></sub>
+    </td>
+  </tr>
+</table>
+
+
+
 ## 🏗️ Architecture & Core Principles
 
 The application is built adhering to **Clean Architecture** principles to enforce a strict separation of concerns, high testability, and long-term maintainability:
@@ -38,28 +62,6 @@ The application is built adhering to **Clean Architecture** principles to enforc
 * **Data Consistency:** Managed concurrent inventory deductions during high-frequency sales transactions using transactional operations on PostgreSQL.
 * **State & Performance:** Optimized list rendering and asynchronous image caching to maintain 60 FPS across native and web builds.
 
----
 
-## 📸 App Screenshots
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="https://github.com/user-attachments/assets/5e93bf8b-c6b3-4793-b06d-a1db40365b0a" width="280" alt="Screen 1" />
-      <br />
-      <sub><b>Dashboard / Overview</b></sub>
-    </td>
-    <td align="center">
-      <img src="https://github.com/user-attachments/assets/12097811-c7e5-474a-bb09-ebd957cf5bf0" width="280" alt="Screen 2" />
-      <br />
-      <sub><b>Product Management</b></sub>
-    </td>
-    <td align="center">
-      <img src="https://github.com/user-attachments/assets/be3f158a-47dc-48d9-b2ab-99e32f9b8dec" width="280" alt="Screen 3" />
-      <br />
-      <sub><b>Sales & Invoicing</b></sub>
-    </td>
-  </tr>
-</table>
 
 ---
